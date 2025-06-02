@@ -1,10 +1,10 @@
 // src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import HomePage from './HomePage';
-import SignIn from './components/auth/SignIn';
-import SignUp from './components/auth/SignUp';
-import PrivateRoute from './components/auth/PrivateRoute';
+import LoginPage from './LoginPage';
+import RegisterPage from './RegisterPage';
 import Profile from './components/Profile';
 import MyListings from './components/MyListings';
 import Search from './components/Search';
@@ -16,40 +16,66 @@ import About from './components/About';
 import Contact from './components/Contact';
 import FAQ from './components/FAQ';
 
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+};
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/pets/:id" element={<PetDetail />} />
-        <Route path="/pet-guide" element={<PetGuide />} />
-        <Route path="/pet-guide/:articleId" element={<PetGuideArticle />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/faq" element={<FAQ />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/pets/:id" element={<PetDetail />} />
+          <Route path="/pet-guide" element={<PetGuide />} />
+          <Route path="/pet-guide/:id" element={<PetGuideArticle />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/faq" element={<FAQ />} />
 
-        {/* Protected Routes */}
-        <Route path="/profile" element={
-          <PrivateRoute>
-            <Profile />
-          </PrivateRoute>
-        } />
-        <Route path="/my-listings" element={
-          <PrivateRoute>
-            <MyListings />
-          </PrivateRoute>
-        } />
-        <Route path="/add-pet" element={
-          <PrivateRoute>
-            <AddPet />
-          </PrivateRoute>
-        } />
-      </Routes>
-    </Router>
+          {/* Protected Routes */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-listings"
+            element={
+              <ProtectedRoute>
+                <MyListings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-pet"
+            element={
+              <ProtectedRoute>
+                <AddPet />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
