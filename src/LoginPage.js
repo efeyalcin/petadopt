@@ -1,16 +1,47 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 
 function LoginPage() {
     const [formData, setFormData] = useState({
         username: '',
         password: ''
     });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const validateForm = () => {
+        if (!formData.username || !formData.password) {
+            setError('Please enter both username and password');
+            return false;
+        }
+        return true;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle login logic here
-        console.log('Login data:', formData);
+        setError('');
+
+        if (!validateForm()) {
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const result = await login(formData.username, formData.password);
+            if (result.success) {
+                navigate('/');
+            } else {
+                setError(result.error || 'Login failed');
+            }
+        } catch (err) {
+            setError('An error occurred during login. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleChange = (e) => {
@@ -18,6 +49,8 @@ function LoginPage() {
             ...formData,
             [e.target.name]: e.target.value
         });
+        // Clear error when user starts typing
+        if (error) setError('');
     };
 
     return (
@@ -27,6 +60,11 @@ function LoginPage() {
                     <h2 className="text-4xl font-bold text-indigo-600 mb-2">Giriş Yap</h2>
                     <p className="text-gray-600">Pet Adoption Platform'a hoş geldiniz</p>
                 </div>
+                {error && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                        {error}
+                    </div>
+                )}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
@@ -75,15 +113,16 @@ function LoginPage() {
                     </div>
                     <button
                         type="submit"
-                        className="w-full py-3 bg-gradient-to-r from-indigo-500 to-blue-400 hover:from-indigo-600 hover:to-blue-500 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                        disabled={loading}
+                        className={`w-full py-3 bg-gradient-to-r from-indigo-500 to-blue-400 hover:from-indigo-600 hover:to-blue-500 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        Giriş Yap
+                        {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
                     </button>
                 </form>
                 <div className="mt-6 text-center">
                     <p className="text-gray-600">
                         Hesabınız yok mu?{' '}
-                        <Link to="/kayit" className="text-indigo-500 font-bold hover:text-indigo-600 transition-colors duration-200">
+                        <Link to="/signup" className="text-indigo-500 font-bold hover:text-indigo-600 transition-colors duration-200">
                             Kayıt Ol
                         </Link>
                     </p>

@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/signin" />;
   }
 
   return children;
@@ -38,8 +38,8 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/signin" element={<LoginPage />} />
+          <Route path="/signup" element={<RegisterPage />} />
           <Route path="/search" element={<Search />} />
           <Route path="/pets/:id" element={<PetDetail />} />
           <Route path="/pet-guide" element={<PetGuide />} />

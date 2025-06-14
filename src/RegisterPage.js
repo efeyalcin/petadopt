@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -8,11 +9,58 @@ function RegisterPage() {
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError('Please fill in all fields');
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log('Registration data:', formData);
+    setError('');
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await register(formData.username, formData.email, formData.password);
+      if (result.success) {
+        navigate('/');
+      } else {
+        setError(result.error || 'Registration failed');
+      }
+    } catch (err) {
+      setError('An error occurred during registration. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -20,6 +68,8 @@ function RegisterPage() {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   return (
@@ -29,6 +79,11 @@ function RegisterPage() {
           <h2 className="text-4xl font-bold text-indigo-600 mb-2">Kayıt Ol</h2>
           <p className="text-gray-600">Pet Adoption Platform'a katılın</p>
         </div>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
@@ -103,15 +158,16 @@ function RegisterPage() {
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-indigo-500 to-blue-400 hover:from-indigo-600 hover:to-blue-500 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+            disabled={loading}
+            className={`w-full py-3 bg-gradient-to-r from-indigo-500 to-blue-400 hover:from-indigo-600 hover:to-blue-500 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Kayıt Ol
+            {loading ? 'Kayıt yapılıyor...' : 'Kayıt Ol'}
           </button>
         </form>
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Zaten hesabınız var mı?{' '}
-            <Link to="/giris" className="text-indigo-500 font-bold hover:text-indigo-600 transition-colors duration-200">
+            <Link to="/signin" className="text-indigo-500 font-bold hover:text-indigo-600 transition-colors duration-200">
               Giriş Yap
             </Link>
           </p>
